@@ -4,3 +4,30 @@ language = "en"
 multilingual = false
 src = "src"
 title = "STARK book"
+
+[output.html]
+site-url = "/stark-book/"
+use-site-url-as-root = true
+curly-quotes = true
+git-repository-url = "https://www.github.com/zksecurity/stark-book"
+additional-css = ["./assets/css/mdbook-admonish.css", "././mdbook-admonish.css"]
+additional-js = ["mermaid.min.js", "mermaid-init.js"]
+
+# for LaTeX
+[output.katex]
+[preprocessor.katex]
+macros = "macros.txt" # crypto related macros (as close to cryptocode as possible)
+
+# for callouts
+[preprocessor.admonish]
+command = "mdbook-admonish"
+assets_version = "2.0.0" # do not edit: managed by `mdbook-admonish install`
+
+# for protocol diagrams
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
+
+# for table of content
+[preprocessor.toc]
+command = "mdbook-toc"
+renderer = ["html"]
