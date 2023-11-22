@@ -5,6 +5,7 @@
 # Foundations
 
 - [Finite Fields](./math/finite_fields.md)
+- [Functions and low-degree extension](./math/lde.md)
 - [Extension Fields](./math/extension_fields.md)
 - [Code Theory](./math/code_theory.md)
 
@@ -28,3 +29,4 @@
 # Verifying Cairo programs on Ethereum
 
 - [Bootloader](./cairo/bootloader.md)
+- []()
