@@ -1,5 +1,8 @@
 name: Deploy Book
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
