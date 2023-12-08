@@ -20,7 +20,7 @@ $$
 
 $p_0$ is the source polynomial. After a round of folding, it results in $p_1$. Then, the final round results in a constant polynomial $p_2$.
 
-To see how this folding algorithm works, please refer to the [code](https://github.com/zksecurity/stark-book/blob/692ce671ca2d06a18fad3d3e12182aefdfd4f8fb/src/fri/code/src/poly.rs#L77).
+To see how this folding algorithm works, please refer to the [code](https://github.com/katat/fri/blob/ab5aad54b8fd1e37b881ed7558d6ad22b6911442/src/poly.rs#L77).
 
 These folded polynomials have the following relationship with their source polynomials:
 
