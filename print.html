@@ -486,7 +486,7 @@ But internally, other facts are used whenever a computation (like verifying a pr
         return _factCheck(fact);
     }
 </code></pre>
-<h2 id="example-of-registering-a-fact"><a class="header" href="#example-of-registering-a-fact">Example of registering a fact</a></h2>
+<h2 id="example-of-facts-from-external-applications"><a class="header" href="#example-of-facts-from-external-applications">Example of facts from external applications</a></h2>
 <p>An example of registering a fact can be seen, for example at the end of a proof verification. In <a href="https://github.com/starkware-libs/starkex-contracts/blob/aecf37f2278b2df233edd13b686d0aa9462ada02/evm-verifier/solidity/contracts/gps/GpsStatementVerifier.sol#L71">GpsStatementVerifier.sol:verifyProofAndRegister()</a>:</p>
 <pre><code class="language-js">    function verifyProofAndRegister(
         uint256[] calldata proofParams,
@@ -523,7 +523,6 @@ But internally, other facts are used whenever a computation (like verifying a pr
         // TRUNCATED...
     }
 </code></pre>
-<h2 id="example-of-checking-if-a-fact-is-registered"><a class="header" href="#example-of-checking-if-a-fact-is-registered">Example of checking if a fact is registered</a></h2>
 <p><a href="https://book.starknet.io/">Starknet</a> is the main application making use of SHARP, and as such their smart contract uses the fact registry directly.</p>
 <p>The main function of Starknet is <a href="https://github.com/mimoo/starknet-contracts/blob/main/contracts/Starknet.sol#L176"><code>updateState()</code></a>, which updates the state based on proofs that have been verified:</p>
 <pre><code class="language-js">    function updateState(
@@ -544,6 +543,7 @@ But internally, other facts are used whenever a computation (like verifying a pr
 
         // TRUNCATED...
 </code></pre>
+<h2 id="example-of-checking-if-a-fact-internally"><a class="header" href="#example-of-checking-if-a-fact-internally">Example of checking if a fact internally</a></h2>
 <p>Another example we can look at is within a proof verification. As explained in <a href="starkex/./cairo.html">Verifying a Cairo proof</a>, a proof verification is split in multiple transactions.</p>
 <p>For example, Merkle membership proofs are verified in segregated transactions, and then the fact that they were verified is used within another execution. The fact is first verified and then registered in <code>MerkleStatementContract:verifyMerkle()</code>:</p>
 <pre><code class="language-js">    function verifyMerkle(
@@ -575,7 +575,7 @@ But internally, other facts are used whenever a computation (like verifying a pr
         uint256 n
     ) internal view virtual override returns (bytes32) {
         // TRUNCATED...
-        
+
         require(merkleStatementContract.isValid(statement), &quot;INVALIDATED_MERKLE_STATEMENT&quot;);
         return root;
     }
