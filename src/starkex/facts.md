@@ -81,9 +81,9 @@ where `registerGpsFacts` is defined as:
 
 ## Example of checking if a fact is registered
 
-[Starknet]() is one user of SHARP, and as such their smart contract uses the fact registry.
+[Starknet](https://book.starknet.io/) is the main application making use of SHARP, and as such their smart contract uses the fact registry directly.
 
-The main function of Starknet is [`updateState()`](https://github.com/mimoo/starknet-contracts/blob/main/contracts/Starknet.sol#L176) which updates the state based on proofs that have been verified:
+The main function of Starknet is [`updateState()`](https://github.com/mimoo/starknet-contracts/blob/main/contracts/Starknet.sol#L176), which updates the state based on proofs that have been verified:
 
 ```js
     function updateState(
@@ -103,4 +103,31 @@ The main function of Starknet is [`updateState()`](https://github.com/mimoo/star
         );
 
         // TRUNCATED...
+```
+
+Another example we can look at is within a proof verification. As explained in [Verifying a Cairo proof](./cairo.md), a proof verification is split in multiple transactions.
+
+For example, Merkle membership proofs are verified in segregated transactions, and then the fact that they were verified is used within another execution:
+
+```js
+    function verifyMerkle(
+        uint256[] memory merkleView,
+        uint256[] memory initialMerkleQueue,
+        uint256 height,
+        uint256 expectedRoot
+    ) public {
+        // TRUNCATED...
+        
+        bytes32 resRoot = verifyMerkle(channelPtr, merkleQueuePtr, bytes32(expectedRoot), nQueries);
+        bytes32 factHash;
+        assembly {
+            // Append the resulted root (should be the return value of verify) to dataToHashPtr.
+            mstore(dataToHashPtr, resRoot)
+            // Reset dataToHashPtr.
+            dataToHashPtr := add(channelPtr, 0x20)
+            factHash := keccak256(dataToHashPtr, add(mul(nQueries, 0x40), 0x20))
+        }
+
+        registerFact(factHash);
+    }
 ```
