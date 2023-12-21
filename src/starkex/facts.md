@@ -13,7 +13,7 @@ A fact is represented (or authenticated) by a hash of it. As such, it is importa
 
 Let's introduce the smart contract in charge of these facts, [FactRegistry.sol](https://github.com/starkware-libs/starkex-contracts/blob/aecf37f2278b2df233edd13b686d0aa9462ada02/scalable-dex/contracts/src/components/FactRegistry.sol):
 
-```solidity
+```js
 contract FactRegistry is IQueryableFactRegistry {
     // Mapping: fact hash -> true.
     mapping(bytes32 => bool) private verifiedFact
@@ -21,7 +21,7 @@ contract FactRegistry is IQueryableFactRegistry {
 
 As you can see, facts are just tracked via a hashmap. Registering a fact is such straightfoward:
 
-```solidity
+```js
     function registerFact(bytes32 factHash) internal {
         // This function stores the fact hash in the mapping.
         verifiedFact[factHash] = true;
@@ -29,7 +29,7 @@ As you can see, facts are just tracked via a hashmap. Registering a fact is such
 
 As well as checking if a fact has been registered:
 
-```solidity
+```js
     function isValid(bytes32 fact) external view override returns (bool) {
         return _factCheck(fact);
     }
@@ -39,7 +39,7 @@ As well as checking if a fact has been registered:
 
 An example of registering a fact can be seen, for example at the end of a proof verification. In [GpsStatementVerifier.sol:verifyProofAndRegister()](https://github.com/starkware-libs/starkex-contracts/blob/aecf37f2278b2df233edd13b686d0aa9462ada02/evm-verifier/solidity/contracts/gps/GpsStatementVerifier.sol#L71):
 
-```solidity
+```js
     function verifyProofAndRegister(
         uint256[] calldata proofParams,
         uint256[] calldata proof,
@@ -55,7 +55,7 @@ An example of registering a fact can be seen, for example at the end of a proof 
 
 where `registerGpsFacts` is defined as:
 
-```solidity
+```js
     function registerGpsFacts(
         uint256[] calldata taskMetadata,
         uint256[] memory publicMemoryPages,
@@ -85,7 +85,7 @@ where `registerGpsFacts` is defined as:
 
 The main function of Starknet is [`updateState()`](https://github.com/mimoo/starknet-contracts/blob/main/contracts/Starknet.sol#L176) which updates the state based on proofs that have been verified:
 
-```solidity
+```js
     function updateState(
         int256 sequenceNumber,
         uint256[] calldata programOutput,
@@ -93,7 +93,7 @@ The main function of Starknet is [`updateState()`](https://github.com/mimoo/star
         uint256 onchainDataSize
     ) external onlyOperator {
         // TRUNCATED...
-        
+
         bytes32 sharpFact = keccak256(
             abi.encode(programHash(), stateTransitionFact)
         );
