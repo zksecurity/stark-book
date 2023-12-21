@@ -35,7 +35,7 @@ As well as checking if a fact has been registered:
     }
 ```
 
-## Example of registering a fact
+## Example of facts from external applications
 
 An example of registering a fact can be seen, for example at the end of a proof verification. In [GpsStatementVerifier.sol:verifyProofAndRegister()](https://github.com/starkware-libs/starkex-contracts/blob/aecf37f2278b2df233edd13b686d0aa9462ada02/evm-verifier/solidity/contracts/gps/GpsStatementVerifier.sol#L71):
 
@@ -79,8 +79,6 @@ where `registerGpsFacts` is defined as:
     }
 ```
 
-## Example of checking if a fact is registered
-
 [Starknet](https://book.starknet.io/) is the main application making use of SHARP, and as such their smart contract uses the fact registry directly.
 
 The main function of Starknet is [`updateState()`](https://github.com/mimoo/starknet-contracts/blob/main/contracts/Starknet.sol#L176), which updates the state based on proofs that have been verified:
@@ -104,6 +102,8 @@ The main function of Starknet is [`updateState()`](https://github.com/mimoo/star
 
         // TRUNCATED...
 ```
+
+## Example of checking if a fact internally
 
 Another example we can look at is within a proof verification. As explained in [Verifying a Cairo proof](./cairo.md), a proof verification is split in multiple transactions.
 
@@ -142,7 +142,7 @@ and in `MerkleStatementVerifier:verifyMerkle()`:
         uint256 n
     ) internal view virtual override returns (bytes32) {
         // TRUNCATED...
-        
+
         require(merkleStatementContract.isValid(statement), "INVALIDATED_MERKLE_STATEMENT");
         return root;
     }
