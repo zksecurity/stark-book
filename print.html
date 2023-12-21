@@ -428,8 +428,9 @@ These boundary constraints can only be used on a few rows, otherwise they’re e
 <h1 id="bootloader"><a class="header" href="#bootloader">Bootloader</a></h1>
 <div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
 <h1 id="starkex"><a class="header" href="#starkex">Starkex</a></h1>
-<p>The starkex contract live in https://github.com/starkware-libs/starkex-contracts
-They implement the <a href="https://starkware.co/resource/joining-forces-sharp/">SHARP (SHARed Prover)</a> verifier, which allows us to verify SHARP proofs on Ethereum.</p>
+<p>The starkex contracts are deployed at <a href="https://etherscan.io/address/0x6cB3EE90C50a38A0e4662bB7e7E6e40B91361BF6#code">0x6cB3EE90C50a38A0e4662bB7e7E6e40B91361BF6</a> and sit behind the upgradable smart contract at <a href="https://etherscan.io/address/0x47312450b3ac8b5b8e247a6bb6d523e7605bdb60#readProxyContract">0x47312450b3ac8b5b8e247a6bb6d523e7605bdb60</a>.</p>
+<p>Somewhat outdated implementations live on Github at <a href="https://github.com/starkware-libs/starkex-contracts">starkware-libs/starkex-contracts</a>.</p>
+<p>They implement the <a href="https://starkware.co/resource/joining-forces-sharp/">SHARP (SHARed Prover)</a> verifier, which allows us to verify SHARP proofs on Ethereum.</p>
 <blockquote>
 <p>Note: A number of contracts refer to “GPS” which is the old name for SHARP (general-proving service).</p>
 </blockquote>
@@ -502,8 +503,8 @@ But internally, other facts are used whenever a computation (like verifying a pr
     }
 </code></pre>
 <h2 id="example-of-checking-if-a-fact-is-registered"><a class="header" href="#example-of-checking-if-a-fact-is-registered">Example of checking if a fact is registered</a></h2>
-<p><a href="starkex/">Starknet</a> is one user of SHARP, and as such their smart contract uses the fact registry.</p>
-<p>The main function of Starknet is <a href="https://github.com/mimoo/starknet-contracts/blob/main/contracts/Starknet.sol#L176"><code>updateState()</code></a> which updates the state based on proofs that have been verified:</p>
+<p><a href="https://book.starknet.io/">Starknet</a> is the main application making use of SHARP, and as such their smart contract uses the fact registry directly.</p>
+<p>The main function of Starknet is <a href="https://github.com/mimoo/starknet-contracts/blob/main/contracts/Starknet.sol#L176"><code>updateState()</code></a>, which updates the state based on proofs that have been verified:</p>
 <pre><code class="language-js">    function updateState(
         int256 sequenceNumber,
         uint256[] calldata programOutput,
@@ -522,13 +523,36 @@ But internally, other facts are used whenever a computation (like verifying a pr
 
         // TRUNCATED...
 </code></pre>
+<p>Another example we can look at is within a proof verification. As explained in <a href="starkex/./cairo.html">Verifying a Cairo proof</a>, a proof verification is split in multiple transactions.</p>
+<p>For example, Merkle membership proofs are verified in segregated transactions, and then the fact that they were verified is used within another execution:</p>
+<pre><code class="language-js">    function verifyMerkle(
+        uint256[] memory merkleView,
+        uint256[] memory initialMerkleQueue,
+        uint256 height,
+        uint256 expectedRoot
+    ) public {
+        // TRUNCATED...
+        
+        bytes32 resRoot = verifyMerkle(channelPtr, merkleQueuePtr, bytes32(expectedRoot), nQueries);
+        bytes32 factHash;
+        assembly {
+            // Append the resulted root (should be the return value of verify) to dataToHashPtr.
+            mstore(dataToHashPtr, resRoot)
+            // Reset dataToHashPtr.
+            dataToHashPtr := add(channelPtr, 0x20)
+            factHash := keccak256(dataToHashPtr, add(mul(nQueries, 0x40), 0x20))
+        }
+
+        registerFact(factHash);
+    }
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
 <h1 id="verifying-cairo-proofs"><a class="header" href="#verifying-cairo-proofs">Verifying Cairo proofs</a></h1>
 <p>Verifying a SHARP Cairo proof on the Starkex contracts is done in a number of transactions:</p>
 <ul>
-<li>3 Verify Merkle transactions (<a href="https://etherscan.io/tx/0x5ad19d4524e0d2f2281dd71b8b1030fca7131ce74b821b936f73df2cba9d65e5">example</a>)</li>
-<li>8 Verify FRI transactions (<a href="https://etherscan.io/tx/0xccc7446d9e5e14892496ee3956f0e9579c2f56b8e70441623aa283c302130201">example</a>)</li>
-<li>A bunch of Register Continuous Memory Page (<a href="https://etherscan.io/tx/0x6862ef5e0ce7599124e7c81625130990a102f483dde292d76b8d869b7d280ea7">example</a>)</li>
+<li>3 <a href="https://etherscan.io/address/0x5899efea757e0dbd6d114b3375c23d7540f65fa4">Verify Merkle</a> transactions to verify Merkle paths (<a href="https://etherscan.io/tx/0x5ad19d4524e0d2f2281dd71b8b1030fca7131ce74b821b936f73df2cba9d65e5">example</a>)</li>
+<li>8 <a href="https://etherscan.io/address/0x3e6118da317f7a433031f03bb71ab870d87dd2dd">Verify FRI</a> transactions to verify the FRI proofs (<a href="https://etherscan.io/tx/0xccc7446d9e5e14892496ee3956f0e9579c2f56b8e70441623aa283c302130201">example</a>)</li>
+<li>A bunch of <a href="https://etherscan.io/address/0xfd14567eaf9ba941cb8c8a94eec14831ca7fd1b4">Register Continuous Memory Page</a> transactions (<a href="https://etherscan.io/tx/0x6862ef5e0ce7599124e7c81625130990a102f483dde292d76b8d869b7d280ea7">example</a>)</li>
 <li>A single Verify Proof and Register (<a href="https://etherscan.io/tx/0x720571bcac39e6b973537d7dd2ba253072e6f82c634ce361de73769d026ce4a1">example</a>)</li>
 </ul>
 <p>The reason the verification of a proof is split in multiple transactions is because proofs are too large, and the verification cost too much gas, to fit in a single transaction. </p>

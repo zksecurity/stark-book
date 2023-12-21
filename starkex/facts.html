@@ -208,8 +208,8 @@ But internally, other facts are used whenever a computation (like verifying a pr
     }
 </code></pre>
 <h2 id="example-of-checking-if-a-fact-is-registered"><a class="header" href="#example-of-checking-if-a-fact-is-registered">Example of checking if a fact is registered</a></h2>
-<p><a href="">Starknet</a> is one user of SHARP, and as such their smart contract uses the fact registry.</p>
-<p>The main function of Starknet is <a href="https://github.com/mimoo/starknet-contracts/blob/main/contracts/Starknet.sol#L176"><code>updateState()</code></a> which updates the state based on proofs that have been verified:</p>
+<p><a href="https://book.starknet.io/">Starknet</a> is the main application making use of SHARP, and as such their smart contract uses the fact registry directly.</p>
+<p>The main function of Starknet is <a href="https://github.com/mimoo/starknet-contracts/blob/main/contracts/Starknet.sol#L176"><code>updateState()</code></a>, which updates the state based on proofs that have been verified:</p>
 <pre><code class="language-js">    function updateState(
         int256 sequenceNumber,
         uint256[] calldata programOutput,
@@ -227,6 +227,29 @@ But internally, other facts are used whenever a computation (like verifying a pr
         );
 
         // TRUNCATED...
+</code></pre>
+<p>Another example we can look at is within a proof verification. As explained in <a href="./cairo.html">Verifying a Cairo proof</a>, a proof verification is split in multiple transactions.</p>
+<p>For example, Merkle membership proofs are verified in segregated transactions, and then the fact that they were verified is used within another execution:</p>
+<pre><code class="language-js">    function verifyMerkle(
+        uint256[] memory merkleView,
+        uint256[] memory initialMerkleQueue,
+        uint256 height,
+        uint256 expectedRoot
+    ) public {
+        // TRUNCATED...
+        
+        bytes32 resRoot = verifyMerkle(channelPtr, merkleQueuePtr, bytes32(expectedRoot), nQueries);
+        bytes32 factHash;
+        assembly {
+            // Append the resulted root (should be the return value of verify) to dataToHashPtr.
+            mstore(dataToHashPtr, resRoot)
+            // Reset dataToHashPtr.
+            dataToHashPtr := add(channelPtr, 0x20)
+            factHash := keccak256(dataToHashPtr, add(mul(nQueries, 0x40), 0x20))
+        }
+
+        registerFact(factHash);
+    }
 </code></pre>
 
                     </main>
