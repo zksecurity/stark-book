@@ -469,7 +469,7 @@ In other words, when people create proofs using the <a href="https://starkware.c
 <p>First, let’s introduce what a fact is: a fact can be any computation that was computed by some logic in the smart contract. For example, a fact can be: “<em>we successfully verified a proof for this Cairo program and these public inputs</em>”.
 This example is actually the main fact that Starkex will register for the different applications making use of it.
 But internally, other facts are used whenever a computation (like verifying a proof) is split in different transactions that need to produce a snapshot of what has been done so far and resume from other snapshots. This is explained in more details in the <a href="starkex/./cairo.html">Verifying Cairo proofs</a> section.</p>
-<p>A fact is represented (or authenticated) by a hash of it. As such, it is important that different applications or different contexts use “different” hash functions not to have collisions. This can be done by adding some domain separation string to the hash function.</p>
+<p>A fact is represented (or authenticated) by a hash of its variables. As such, it is important that different applications or different contexts use “different” hash functions not to have collisions. This can be done by adding some domain separation string to the hash function, or as it is done by starkex by using different fact registries for different usecases.</p>
 <h2 id="the-fact-registry"><a class="header" href="#the-fact-registry">The Fact Registry</a></h2>
 <p>Let’s introduce the smart contract in charge of these facts, <a href="https://github.com/starkware-libs/starkex-contracts/blob/aecf37f2278b2df233edd13b686d0aa9462ada02/scalable-dex/contracts/src/components/FactRegistry.sol">FactRegistry.sol</a>:</p>
 <pre><code class="language-js">contract FactRegistry is IQueryableFactRegistry {
@@ -545,7 +545,7 @@ But internally, other facts are used whenever a computation (like verifying a pr
         // TRUNCATED...
 </code></pre>
 <p>Another example we can look at is within a proof verification. As explained in <a href="starkex/./cairo.html">Verifying a Cairo proof</a>, a proof verification is split in multiple transactions.</p>
-<p>For example, Merkle membership proofs are verified in segregated transactions, and then the fact that they were verified is used within another execution:</p>
+<p>For example, Merkle membership proofs are verified in segregated transactions, and then the fact that they were verified is used within another execution. The fact is first verified and then registered in <code>MerkleStatementContract:verifyMerkle()</code>:</p>
 <pre><code class="language-js">    function verifyMerkle(
         uint256[] memory merkleView,
         uint256[] memory initialMerkleQueue,
@@ -553,7 +553,7 @@ But internally, other facts are used whenever a computation (like verifying a pr
         uint256 expectedRoot
     ) public {
         // TRUNCATED...
-        
+
         bytes32 resRoot = verifyMerkle(channelPtr, merkleQueuePtr, bytes32(expectedRoot), nQueries);
         bytes32 factHash;
         assembly {
@@ -567,6 +567,20 @@ But internally, other facts are used whenever a computation (like verifying a pr
         registerFact(factHash);
     }
 </code></pre>
+<p>and in <code>MerkleStatementVerifier:verifyMerkle()</code>:</p>
+<pre><code class="language-js">    function verifyMerkle(
+        uint256, /*channelPtr*/
+        uint256 queuePtr,
+        bytes32 root,
+        uint256 n
+    ) internal view virtual override returns (bytes32) {
+        // TRUNCATED...
+        
+        require(merkleStatementContract.isValid(statement), &quot;INVALIDATED_MERKLE_STATEMENT&quot;);
+        return root;
+    }
+</code></pre>
+<p>where both use their own fact registry not to collide with other usecase (as pointed out at the beginning of this section).</p>
 <div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
 <h1 id="verifying-cairo-proofs"><a class="header" href="#verifying-cairo-proofs">Verifying Cairo proofs</a></h1>
 <p>Verifying a SHARP Cairo proof on the Starkex contracts is done in a number of transactions:</p>
