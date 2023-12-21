@@ -10,3 +10,9 @@ Verifying a SHARP Cairo proof on the Starkex contracts is done in a number of tr
 The reason the verification of a proof is split in multiple transactions is because proofs are too large, and the verification cost too much gas, to fit in a single transaction. 
 
 > Note: Proofs can be split using [stark-evm-adapter](https://github.com/zksecurity/stark-evm-adapter/)
+
+## Layouts
+
+Different layouts are deployed on SHARP:
+
+https://github.com/starkware-libs/starkex-contracts/tree/aecf37f2278b2df233edd13b686d0aa9462ada02/evm-verifier/solidity/contracts/cpu

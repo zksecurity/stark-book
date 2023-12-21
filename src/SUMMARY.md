@@ -18,11 +18,12 @@
 - [STARK](./stark/overview.md)
 - [FRI](./fri/fri.md)
 
-# Cairo: a zkVM
+# Cairo: STARK's zkVM
 
 - [Cairo](./cairo/cairo.md)
 - [Cairo public memory](./cairo/memory.md)
 - [Bootloader](./cairo/bootloader.md)
+- [Builtins and Layouts](./cairo/builtins.md)
 
 # Starkex: Verifying Cairo programs on Ethereum
 
