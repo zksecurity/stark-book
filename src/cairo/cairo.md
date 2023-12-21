@@ -1,5 +1,7 @@
 # Cairo
 
+Check cairo book: https://book.cairo-lang.org/
+
 There's different ways to write for the Cairo VM:
 
 * using Cairo instructions directly, documented in the Cairo paper (good luck) 

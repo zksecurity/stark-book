@@ -11,22 +11,23 @@
 
 # Circuits
 
-- [AIR](./air/air.md)
+- [The AIR Arithmetization](./air/air.md)
 
-# Protocol
+# STARK
 
 - [STARK](./stark/overview.md)
-
-# PCS
-
 - [FRI](./fri/fri.md)
 
-# Cairo
+# Cairo: a zkVM
 
 - [Cairo](./cairo/cairo.md)
 - [Cairo public memory](./cairo/memory.md)
-
-# Verifying Cairo programs on Ethereum
-
 - [Bootloader](./cairo/bootloader.md)
+
+# Starkex: Verifying Cairo programs on Ethereum
+
 - []()
+
+# Starknet
+
+- [Starknet](./starknet/starknet.md)
