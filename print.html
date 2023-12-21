@@ -450,23 +450,23 @@ But internally, other facts are used whenever a computation (like verifying a pr
 <p>A fact is represented (or authenticated) by a hash of it. As such, it is important that different applications or different contexts use “different” hash functions not to have collisions. This can be done by adding some domain separation string to the hash function.</p>
 <h2 id="the-fact-registry"><a class="header" href="#the-fact-registry">The Fact Registry</a></h2>
 <p>Let’s introduce the smart contract in charge of these facts, <a href="https://github.com/starkware-libs/starkex-contracts/blob/aecf37f2278b2df233edd13b686d0aa9462ada02/scalable-dex/contracts/src/components/FactRegistry.sol">FactRegistry.sol</a>:</p>
-<pre><code class="language-solidity">contract FactRegistry is IQueryableFactRegistry {
+<pre><code class="language-js">contract FactRegistry is IQueryableFactRegistry {
     // Mapping: fact hash -&gt; true.
     mapping(bytes32 =&gt; bool) private verifiedFact
 </code></pre>
 <p>As you can see, facts are just tracked via a hashmap. Registering a fact is such straightfoward:</p>
-<pre><code class="language-solidity">    function registerFact(bytes32 factHash) internal {
+<pre><code class="language-js">    function registerFact(bytes32 factHash) internal {
         // This function stores the fact hash in the mapping.
         verifiedFact[factHash] = true;
 </code></pre>
 <p>As well as checking if a fact has been registered:</p>
-<pre><code class="language-solidity">    function isValid(bytes32 fact) external view override returns (bool) {
+<pre><code class="language-js">    function isValid(bytes32 fact) external view override returns (bool) {
         return _factCheck(fact);
     }
 </code></pre>
 <h2 id="example-of-registering-a-fact"><a class="header" href="#example-of-registering-a-fact">Example of registering a fact</a></h2>
 <p>An example of registering a fact can be seen, for example at the end of a proof verification. In <a href="https://github.com/starkware-libs/starkex-contracts/blob/aecf37f2278b2df233edd13b686d0aa9462ada02/evm-verifier/solidity/contracts/gps/GpsStatementVerifier.sol#L71">GpsStatementVerifier.sol:verifyProofAndRegister()</a>:</p>
-<pre><code class="language-solidity">    function verifyProofAndRegister(
+<pre><code class="language-js">    function verifyProofAndRegister(
         uint256[] calldata proofParams,
         uint256[] calldata proof,
         uint256[] calldata taskMetadata,
@@ -479,7 +479,7 @@ But internally, other facts are used whenever a computation (like verifying a pr
     }
 </code></pre>
 <p>where <code>registerGpsFacts</code> is defined as:</p>
-<pre><code class="language-solidity">    function registerGpsFacts(
+<pre><code class="language-js">    function registerGpsFacts(
         uint256[] calldata taskMetadata,
         uint256[] memory publicMemoryPages,
         uint256 outputStartAddress
@@ -504,14 +504,14 @@ But internally, other facts are used whenever a computation (like verifying a pr
 <h2 id="example-of-checking-if-a-fact-is-registered"><a class="header" href="#example-of-checking-if-a-fact-is-registered">Example of checking if a fact is registered</a></h2>
 <p><a href="starkex/">Starknet</a> is one user of SHARP, and as such their smart contract uses the fact registry.</p>
 <p>The main function of Starknet is <a href="https://github.com/mimoo/starknet-contracts/blob/main/contracts/Starknet.sol#L176"><code>updateState()</code></a> which updates the state based on proofs that have been verified:</p>
-<pre><code class="language-solidity">    function updateState(
+<pre><code class="language-js">    function updateState(
         int256 sequenceNumber,
         uint256[] calldata programOutput,
         uint256 onchainDataHash,
         uint256 onchainDataSize
     ) external onlyOperator {
         // TRUNCATED...
-        
+
         bytes32 sharpFact = keccak256(
             abi.encode(programHash(), stateTransitionFact)
         );
