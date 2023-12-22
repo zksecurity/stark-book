@@ -2,7 +2,7 @@ Due to the gas limitations when verifying an original STARK proof, the proof gen
 
 This process depends on the [fact registry](https://zksecurity.github.io/stark-book/starkex/facts.html), which serves as verification snapshots. This allows the Main Proof to be verified based on earlier snapshots obtained from the Merkle Proofs and FRI Proofs, thereby circumventing the bottleneck caused by gas limitations in a single EVM transaction.
 
-This section aims to clarify the roles of the various proof types, providing an understanding of how the split proof works with references to the source code in [Cairo verifier contracts](https://github.com/starkware-libs/starkex-contracts), [Stone Prover](https://github.com/starkware-libs/stone-prover) and  [Stark EVM Adapter](https://github.com/zksecurity/stark-evm-adapter).
+This section aims to clarify the roles of the various proof types, showing how the split proof works with references to the source code in [Cairo verifier contracts](https://github.com/starkware-libs/starkex-contracts), [Stone Prover](https://github.com/starkware-libs/stone-prover) and  [Stark EVM Adapter](https://github.com/zksecurity/stark-evm-adapter).
 
 ### Main proof
 
