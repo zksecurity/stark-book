@@ -30,6 +30,7 @@
 - [Overview](./starkex/starkex.md)
 - [Facts](./starkex/facts.md)
 - [Verifying Cairo proofs](./starkex/cairo.md)
+- [Proof splitter](./starkex/proof-splitter.md)
 - [Bootloader](./starkex/bootloader.md)
 
 # Starknet
