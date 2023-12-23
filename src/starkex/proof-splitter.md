@@ -40,7 +40,7 @@ In other word, to do the check at a random point $z$, they check:
 $$\sum_{j=1}^{k} C_j(z) (\alpha_j z^{D-D_j^{-1}} + \beta_j) == \sum_{i=0}^{M_2-1} z^i h_i(z^{M_2})$$
 
 
-After completing the OODS consistency check, it proceeds to prepares and verifies the FRI layers for $p_0​$.
+After completing the OODS consistency check, it proceeds to prepare and verifie the FRI layers for $p_0​$.
 
 Conducting the FRI test requires the evaluation domain of $p_0$ to be within the expected domain for low degree linear extension instead of the out of domain (todo: maybe it is more appropriate to say field extension for the out of domain here?). The FRI protocol cannot process queries for out-of-domain evaluation points due to computational feasibility constraints for the prover.
 
