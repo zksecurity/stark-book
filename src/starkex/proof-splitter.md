@@ -35,11 +35,16 @@ $$
 
 By invoking the [CpuConstraintPoly](https://github.com/starkware-libs/starkex-contracts/blob/f4ed79bb04b56d587618c24312e87d81e4efc56b/evm-verifier/solidity/contracts/cpu/CpuVerifier.sol#L353) contract to evaluate the $h(x)$ with the trace mask values, it checks the out-of-domain-sampling (oods) consistency among these provided trace values and the evaluations of decomposed composition polynomial.
 
+In other word, to do the check at a random point $z$, they check:
+
+$$\sum_{j=1}^{k} C_j(z) (\alpha_j z^{D-D_j^{-1}} + \beta_j) == \sum_{i=0}^{M_2-1} z^i h_i(z^{M_2})$$
+
+
 After completing the OODS consistency check, it proceeds to prepares and verifies the FRI layers for $p_0​$.
 
 Conducting the FRI test requires the evaluation domain of $p_0$ to be within the expected domain for low degree linear extension instead of the out of domain (todo: maybe it is more appropriate to say field extension for the out of domain here?). The FRI protocol cannot process queries for out-of-domain evaluation points due to computational feasibility constraints for the prover.
 
-Therefore, the trace values and evaluations of the decomposed composition polynomial should be induced from a domain aligned with a low-degree extension. These newly induced values, as opposed to those used for the OODS consistency check, are utilized to derive the deep composition polynomial $p_0$ through the [CpuOods](https://github.com/starkware-libs/starkex-contracts/blob/f4ed79bb04b56d587618c24312e87d81e4efc56b/evm-verifier/solidity/contracts/StarkVerifier.sol#L431) [contract](https://github.com/starkware-libs/starkex-contracts/blob/f4ed79bb04b56d587618c24312e87d81e4efc56b/evm-verifier/solidity/contracts/cpu/layout5/CpuOods.sol#L36):
+Therefore, the trace values and evaluations of the decomposed composition polynomial should be induced from a domain aligned with a low-degree extension. These newly induced values, as opposed to those used for the OODS consistency check, are utilized to derive the deep composition polynomial $p_0$ through the [CpuOods](https://github.com/starkware-libs/starkex-contracts/blob/f4ed79bb04b56d587618c24312e87d81e4efc56b/evm-verifier/solidity/contracts/StarkVerifier.sol#L431) [contract](https://github.com/starkware-libs/starkex-contracts/blob/f4ed79bb04b56d587618c24312e87d81e4efc56b/evm-verifier/solidity/contracts/cpu/layout5/CpuOods.sol#L36).
 
 $$p_0(x) = \sum_{\ell=0}^{M_1-1} \frac{\gamma_\ell \cdot (f_{j\ell}(x) - y_\ell)}{x - z g_\ell^e} + \sum_{i=0}^{M_2-1} \frac{\gamma_{M_1+i} \cdot (h_i(x) - \hat{y}_i)}{x - z^{M_2}}
 $$
