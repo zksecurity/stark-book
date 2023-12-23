@@ -68,36 +68,36 @@ The primary reason for generating these annotations, rather than extracting dire
 [Here](https://github.com/zksecurity/stark-evm-adapter/blob/f4f2c88bd30c157423f67564d9ea3481b70c0a3c/tests/fixtures/annotated_proof.json#L2) is an example of an annotated proof. This example showcases how annotations are combined with the original proof into a single JSON file for further processing. The annotations themselves represent various data points, here are some of the examples:
 
 ```js
-    // execution trace commitment
-    "P->V[0:32]: /cpu air/STARK/Original/Commit on Trace: Commitment: Hash(0x3c8537043a0e5298ac50fd0c85a697b4f64ad84d000000000000000000000000)"
+// execution trace commitment
+"P->V[0:32]: /cpu air/STARK/Original/Commit on Trace: Commitment: Hash(0x3c8537043a0e5298ac50fd0c85a697b4f64ad84d000000000000000000000000)"
 ```
 
 ```js
-    // interaction trace commitment
-    "P->V[32:64]: /cpu air/STARK/Interaction/Commit on Trace: Commitment: Hash(0xf5a5807d04f92b370a2ca27ccafaf40f196a27ab000000000000000000000000)"
+// interaction trace commitment
+"P->V[32:64]: /cpu air/STARK/Interaction/Commit on Trace: Commitment: Hash(0xf5a5807d04f92b370a2ca27ccafaf40f196a27ab000000000000000000000000)"
 ```
 
 ```js
-    // composition trace commitment
-    "P->V[64:96]: /cpu air/STARK/Out Of Domain Sampling/Commit on Trace: Commitment: Hash(0x2a0d752d3cf399e94ebc1cc8a425ce89d848b7d7000000000000000000000000)"
+// composition trace commitment
+"P->V[64:96]: /cpu air/STARK/Out Of Domain Sampling/Commit on Trace: Commitment: Hash(0x2a0d752d3cf399e94ebc1cc8a425ce89d848b7d7000000000000000000000000)"
 ```
 
 ```js
-    // verifier challenges for interaction trace 
-    "V->P: /cpu air/STARK/Interaction: Interaction element #0: Field Element(0x29767aebd00e6750d36470c07b003624f52e08794f24c23c17fdbcf66e1593f)",
-    "V->P: /cpu air/STARK/Interaction: Interaction element #1: Field Element(0x5e8b64f90ebe7e15559196630cd2bb6bb95b0d9121ff82adf708a2e6637b142)..."
+// verifier challenges for interaction trace 
+"V->P: /cpu air/STARK/Interaction: Interaction element #0: Field Element(0x29767aebd00e6750d36470c07b003624f52e08794f24c23c17fdbcf66e1593f)",
+"V->P: /cpu air/STARK/Interaction: Interaction element #1: Field Element(0x5e8b64f90ebe7e15559196630cd2bb6bb95b0d9121ff82adf708a2e6637b142)..."
 ```
 
 ```js
-    // oods evaluation point
-    "V->P: /cpu air/STARK/Out Of Domain Sampling/OODS values: Evaluation point: Field Element(0x4f03c43ef1a1476cea9b31c4880f1808ed0dada6e2d650af829115186740856)"
+// oods evaluation point
+"V->P: /cpu air/STARK/Out Of Domain Sampling/OODS values: Evaluation point: Field Element(0x4f03c43ef1a1476cea9b31c4880f1808ed0dada6e2d650af829115186740856)"
 ```
 
 ```js
-    // commitments for FRI layers
-    "P->V[8768:8800]: /cpu air/STARK/FRI/Commitment/Layer 1: Commitment: Hash(0x994586a93d3f0397b588be7eb5ea55ecaec10145000000000000000000000000)",
-    "V->P: /cpu air/STARK/FRI/Commitment/Layer 2: Evaluation point: Field Element(0x69d6218dda1b690e11974c0d7bce4b5fb6584f5b188d2d8988436c9d7423fac)",
-    "P->V[8800:8832]: /cpu air/STARK/FRI/Commitment/Layer 2: Commitment: Hash(0x533a5b9d2896a3a50338eba17f3c660f6fc89995000000000000000000000000..."
+// commitments for FRI layers
+"P->V[8768:8800]: /cpu air/STARK/FRI/Commitment/Layer 1: Commitment: Hash(0x994586a93d3f0397b588be7eb5ea55ecaec10145000000000000000000000000)",
+"V->P: /cpu air/STARK/FRI/Commitment/Layer 2: Evaluation point: Field Element(0x69d6218dda1b690e11974c0d7bce4b5fb6584f5b188d2d8988436c9d7423fac)",
+"P->V[8800:8832]: /cpu air/STARK/FRI/Commitment/Layer 2: Commitment: Hash(0x533a5b9d2896a3a50338eba17f3c660f6fc89995000000000000000000000000..."
 ```
 
 
