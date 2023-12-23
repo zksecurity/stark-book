@@ -40,9 +40,9 @@ In other word, to do the check at a random point $z$, they check:
 $$\sum_{j=1}^{k} C_j(z) (\alpha_j z^{D-D_j^{-1}} + \beta_j) == \sum_{i=0}^{M_2-1} z^i h_i(z^{M_2})$$
 
 
-After completing the OODS consistency check, it proceeds to prepare and verifie the FRI layers for $p_0​$.
+After passed the OODS consistency check, it proceeds to prepare and verifie the FRI layers for $p_0​$.
 
-By aggregating the trace values and evaluations obtained from the OODS, it derives the deep composition polynomial $p_0$ (or quotient polynomial) through the [CpuOods](https://github.com/starkware-libs/starkex-contracts/blob/f4ed79bb04b56d587618c24312e87d81e4efc56b/evm-verifier/solidity/contracts/StarkVerifier.sol#L431) [contract](https://github.com/starkware-libs/starkex-contracts/blob/f4ed79bb04b56d587618c24312e87d81e4efc56b/evm-verifier/solidity/contracts/cpu/layout5/CpuOods.sol#L36).
+By aggregating the trace values $y_\ell$ and evaluations $\hat{y}_i$ obtained from the OODS, it derives the deep composition polynomial $p_0$ (or quotient polynomial) through the [CpuOods](https://github.com/starkware-libs/starkex-contracts/blob/f4ed79bb04b56d587618c24312e87d81e4efc56b/evm-verifier/solidity/contracts/StarkVerifier.sol#L431) [contract](https://github.com/starkware-libs/starkex-contracts/blob/f4ed79bb04b56d587618c24312e87d81e4efc56b/evm-verifier/solidity/contracts/cpu/layout5/CpuOods.sol#L36).
 
 $$p_0(x) = \sum_{\ell=0}^{M_1-1} \frac{\gamma_\ell \cdot (f_{\ell}(x) - y_\ell)}{x - z g^{s\ell}} + \sum_{i=0}^{M_2-1} \frac{\gamma_{M_1+i} \cdot (h_i(x) - \hat{y}_i)}{x - z^{M_2}}
 $$
