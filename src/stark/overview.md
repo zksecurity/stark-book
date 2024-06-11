@@ -8,7 +8,7 @@ Here's some notes on how STARK works, following my read of the [ethSTARK Documen
 
 Imagine a table with $W$ columns representing **registers**, which can be used as temporary values in our program/circuit. The table has $N$ rows, which represent the temporary values of each of these registers in each "**step**" of the program/circuit.
 
-For example, a table of 4 registers and 3 steps:
+For example, a table of 3 registers and 3 steps:
 
 <table>
 <thead>
@@ -108,17 +108,17 @@ Now our protocol looks like this:
 1. The prover commits to the execution trace columns polynomials, then sends the commitments to the verifier.
 1. The prover commits to the quotient polynomials, the sends them to the verifier.
 1. The verifier sends a random value $z$.
-1. The prover evaluates the execution trace column polynomials at $z$ and $z \cdot g$ (remember the verifier might want to evaluate a constraint that looks like this $c_0(x) = f1(x) + f2(x) - f3(x \cdot g)$ as it also uses the next row) and sends the evaluations to the verifier.
+1. The prover evaluates the execution trace column polynomials at $z$ and $z \cdot g$ (remember the verifier might want to evaluate a constraint that looks like this $c_0(x) = f_1(x) + f_2(x) - f_3(x \cdot g)$ as it also uses the next row) and sends the evaluations to the verifier.
 1. The prover evaluates the quotient polynomials at $z$ and sends the evaluations to the verifier (these evaluations are called "masks" in the paper).
 1. For each evaluation, the prover also sends evaluation proofs.
 1. The verifier verifies all evaluation proofs.
-1. The verifier then checks that each constraint is satisfied, by checking the $t = c \cdot \prod_i (x - g^i)$ equation _in the clear_ (using the evaluations provided by the prover).
+1. The verifier then checks that each constraint is satisfied, by checking the $c = t \cdot \prod_i (x - g^i)$ equation _in the clear_ (using the evaluations provided by the prover).
 
 ## Straw man 5: a random linear combination to reduce all the checks to a single check
 
 If you've been reading STARK papers you're probably wondering where the heck is the **composition polynomial**. That final polynomial is simply a way to aggregate a number of checks in order to optimize the protocol.
 
-The idea is that instead of checking a property on a list of polynomial, you can check that property on a random linear combination. For example, instead of checking that $f_1(z) = 3$ and $f_2(z) = 4$, and $f_3(z) = 8$, you can check that for random values $r_1, r_2, r_3$ you have:
+The idea is that instead of checking a property on a list of polynomials, you can check that property on a random linear combination. For example, instead of checking that $f_1(z) = 3$ and $f_2(z) = 4$, and $f_3(z) = 8$, you can check that for random values $r_1, r_2, r_3$ you have:
 
 $$r_1 \cdot f_1(z) + r_2 \cdot f_2(z) + r_3 \cdot f_3(z) = 3 r_1 + 4 r_2 + 8 r_3$$
 

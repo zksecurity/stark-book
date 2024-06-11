@@ -143,12 +143,12 @@ To do this, the first $l$ accesses are replaced with accesses to $(0,0)$ in $L_1
 This means two things:
 
 1. the nominator of $p$ will contain $z - (0 + \alpha \cdot 0) = z$ in the first $l$ iterations (so $z^l$). Furthermore, these will not be cancelled by any values in the denominator (as $L_2$ is supposedly using actual accesses to the public memory)
-2. the denominator of $p$ will contain $\prod_{i \in [[0, l]]} [z - (a'_i + \alpha \cdot m^*[i])]$, and these values won't be canceled by values in the nominator either
+2. the denominator of $p$ will contain $\prod_{i \in [0, l]} [z - (a'_i + \alpha \cdot m^*[i])]$, and these values won't be canceled by values in the nominator either
 
 As such, the final value of the accumulator should look like this if the prover followed our directions:
 
 $$
-\frac{z^l}{\prod_{i \in [[0, l]]} [z - (a'_i + \alpha \cdot m^*[i])]}
+\frac{z^l}{\prod_{i \in [0, l]} [z - (a'_i + \alpha \cdot m^*[i])]}
 $$
 
 which we can enforce (as the verifier) with a boundary constraint. 
