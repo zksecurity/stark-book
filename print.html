@@ -426,9 +426,167 @@ These boundary constraints can only be used on a few rows, otherwise they’re e
 <p><img src="https://hackmd.io/_uploads/HkUiHYcV6.png" alt="Screenshot 2023-11-21 at 11.31.39 AM" /></p>
 <div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
 <h1 id="bootloader"><a class="header" href="#bootloader">Bootloader</a></h1>
+<p>The bootloader is a Cairo program that can prove the execution of multiple Cairo programs by simply running the programs inside the bootloader. Since the Cairo program to be proved can be any arbitrary program, it can also be a Cairo verifier program, which means that the bootloader also supports creating a proof that proves the validity of a bootloader proof. Building on this concept, the bootloader allows creating a proof of nested Cairo programs, or a tree-like structure made up of Cairo programs and bootloader proofs.</p>
+<p>If this sounds too abstract, don’t worry–this doc will attempt to explain in detail how the bootloader works and the two use cases mentioned above. (Note: this is based on the <a href="https://github.com/starkware-libs/cairo-lang/tree/v0.13.1/src/starkware/cairo/bootloaders">Cairo v0.13.1 version of the bootloader</a>)</p>
+<h2 id="a-short-primer-on-how-cairovm-works"><a class="header" href="#a-short-primer-on-how-cairovm-works">A short primer on how CairoVM works</a></h2>
+<p>Before diving into the details about the bootloader, let’s go over how CairoVM works. CairoVM is a virtual machine that can execute a Cairo program (technically, a Cairo program compiled to a Cairo-specific set of instructions) and in the end produce a memory vector and execution trace table that is populated throughout the execution of the program.</p>
+<p>More specifically, the generated memory can be thought of as a vector that is divided into segments that have different functionalities (e.g. program instructions, execution, output). The execution trace is a table with 3 columns each representing a register value and rows that each represent the value of the registers over the execution of the program. This means that the number of rows is equal to the number of steps that the CairoVM runs, given that 1 step equals 1 instruction call.</p>
+<div style="text-align: center;">
+    <img src="cairo/cairo_vm.png" alt="CairoVM execution structure" width="80%">
+</div>
+<p>Note: the execution segment can be thought of as values that are written to the stack while running a program. Since the memory values can only be written once in CairoVM, the stack values are all written to this segment.</p>
+<p>Using these results of the CairoVM execution, the Stone prover can create a proof that proves the following (very roughly speaking):</p>
+<ul>
+<li>there exists a valid execution trace of n steps on the CairoVM
+<ul>
+<li>which starts with a given set of initial register values</li>
+<li>which ends with a given set of final register values</li>
+<li>for some memory which satisfies certain constraints (e.g. read-only, continuous, consistent with the public memory portion)</li>
+</ul>
+</li>
+</ul>
+<h3 id="builtins"><a class="header" href="#builtins">Builtins</a></h3>
+<p>Builtins are pre-allocated memory cells that can be used for certain commonly-used “builtin” functions. As of Cairo v0.13.1, these builtins are currently supported:</p>
+<ul>
+<li>Output</li>
+<li>Pedersen</li>
+<li>Range check</li>
+<li>Bitwise</li>
+<li>Elliptic curve operation</li>
+<li>Keccak</li>
+<li>Poseidon</li>
+<li>Range check (96 bits)</li>
+</ul>
+<p>Each builtin will have a separate segment in the memory vector and depending on the builtin, you can just input the values you want to run the builtin on or additionally use the output of the builtin.</p>
+<p>For example, to use the range-check builtin you can just input the values you want to range-check in a certain memory segment and the CairoVM will create the necessary constraints for you.</p>
+<p>For a Pedersen builtin, on the other hand, for each builtin use, you can input two values and read the next cell as output since the VM provides a guarantee that the next cell will contain the correct output (i.e. the Pedersen hash of the two input values).</p>
+<div style="text-align: center;">
+    <img src="cairo/builtin_memory_layout.png" alt="Builtin memory layout" width="80%">
+</div>
+<p>In order to run a program that uses one of these builtins, we need to specify a specific layout to CairoVM that supports the builtins that the program uses. Below is a subset of layouts that are currently supported by the CairoVM. (Check this <a href="https://github.com/lambdaclass/cairo-vm/blob/main/vm/src/types/instance_definitions/builtins_instance_def.rs">code</a> for the updated, comprehensive list)</p>
+<div class="table-wrapper"><table><thead><tr><th></th><th style="text-align: center">small</th><th style="text-align: center">recursive</th><th style="text-align: center">dex</th><th style="text-align: center">recursive_with_poseidon</th><th style="text-align: center">starknet</th><th style="text-align: center">starknet_with_keccak</th></tr></thead><tbody>
+<tr><td>output</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>pedersen</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>range_check</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>bitwise</td><td style="text-align: center"></td><td style="text-align: center">O</td><td style="text-align: center"></td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>ecdsa</td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center">O</td><td style="text-align: center"></td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>poseidon</td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>ec_op</td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>keccak</td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center">O</td></tr>
+</tbody></table>
+</div>
+<h3 id="hints"><a class="header" href="#hints">Hints</a></h3>
+<p>Hints are non-deterministic computation (i.e. code that is run outside of the VM to populate values that are validated inside the VM)</p>
+<p>For example, when computing the square root of an integer in a prime field, directly computing this using constraints is expensive. So instead, we can use hint to calculate the square root and create a constraint inside the VM that checks that the power of the given square root is equal to the original value.</p>
+<p>So given a computation <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.04em;vertical-align:-0.3369em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7031em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span><span style="top:-2.6631em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width='400em' height='1.08em' viewBox='0 0 400000 1080' preserveAspectRatio='xMinYMin slice'><path d='M95,702 c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14 c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54 c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10 s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429 c69,-144,104.5,-217.7,106.5,-221 l0 -0 c5.3,-9.3,12,-14,20,-14 H400000v40H845.2724 s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7 c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3369em;"><span></span></span></span></span></span></span></span></span>, compute <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span></span> using a hint and create a constraint: <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.4653em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">∗</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span></p>
+<p><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span> from the perspective of the VM is a wild guess, but the constraint makes sure that it’s valid.</p>
+<p>In Cairo 0 language, you can run a hint by embedding a block of Python code. Below is an example of computing a square root of 25.</p>
+<pre><code class="language-python">[ap] = 25, ap++;
+%{
+    import math
+    memory[ap] = int(math.sqrt(memory[ap - 1]))
+%}
+[ap - 1] = [ap] * [ap], ap++;
+</code></pre>
+<p>When compiling this Cairo 0 program into CASM, the compiler stores this Python code as a string and specifies that this hint should be run before running the ensuing instruction. In this case, the hint should be run before the <code>[ap - 1] = [ap] * [ap], ap++;</code> instruction.</p>
+<h2 id="how-the-simple-bootloader-works"><a class="header" href="#how-the-simple-bootloader-works">How the “simple bootloader” works</a></h2>
+<p>Coming back to the bootloader, as per the previous section, running the bootloader program will result in a memory vector and an execution trace. But since the bootloader program runs Cairo programs inside it, the generated memory and execution trace should include those of the Cairo programs as well. Below is an example of what the memory layout looks like after running the bootloader:</p>
+<div style="text-align: center;">
+    <img src="cairo/simple_bootloader_memory_layout.png" alt="Simple bootloader memory layout" width="80%">
+</div>
+<p>(Note: a <strong>task</strong> here refers to a single Cairo program and its inputs)</p>
+<p>In other words, what the bootloader program does is it makes sure that the inner Cairo programs can write to various segments in the memory without any conflicts with each other or with the outer bootloader program.</p>
+<p>This is a “simple” use of the bootloader and we can use this functionality using the <code>simple_bootloader.cairo</code> file (<a href="https://github.com/starkware-libs/cairo-lang/blob/v0.13.1/src/starkware/cairo/bootloaders/simple_bootloader/simple_bootloader.cairo">link</a>) in the Cairo repo. We will discuss an “advanced” use of the bootloader in the next section.</p>
+<h3 id="some-more-details-on-how-the-simple-bootloader-works"><a class="header" href="#some-more-details-on-how-the-simple-bootloader-works">Some more details on how the “simple” bootloader works</a></h3>
+<h4 id="what-builtins-does-the-bootloader-use"><a class="header" href="#what-builtins-does-the-bootloader-use">What builtins does the bootloader use?</a></h4>
+<ul>
+<li>
+<p>output</p>
+<ul>
+<li>the “simple” bootloader doesn’t write any output to the memory</li>
+</ul>
+</li>
+<li>
+<p>pedersen</p>
+<ul>
+<li>used to hash the task program bytecode</li>
+</ul>
+</li>
+<li>
+<p>range checks</p>
+<ul>
+<li>
+<p>used to check that each task program used the builtins correctly.</p>
+</li>
+<li>
+<p>Each builtin has a different amounts of memory cell usage</p>
+<pre><code>  output=1,
+  pedersen=3,
+  range_check=1,
+  ecdsa=2,
+  bitwise=5,
+  ec_op=7,
+  keccak=16,
+  poseidon=6,
+</code></pre>
+</li>
+<li>
+<p>So for example, since the pedersen builtin requires 3 cells (2 for inputs, 1 for output), the bootloader checks that the difference between the pedersen builtin pointer before and after the task program run is positive (this is where the range check comes in) and that it is divisible by 3.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="how-are-task-program-bytecode-loaded-into-memory"><a class="header" href="#how-are-task-program-bytecode-loaded-into-memory">How are task program bytecode loaded into memory?</a></h4>
+<p>The bootloader creates a separate segment in the memory for storing each task program bytecode</p>
+<h4 id="how-are-task-outputs-written-to-memory"><a class="header" href="#how-are-task-outputs-written-to-memory">How are task outputs written to memory?</a></h4>
+<p>The bootloader writes the task outputs sequentially (i.e. in the order that the task programs are run) to the output builtin segment. Below is an example of what this looks like:</p>
+<div style="text-align: center;">
+    <img src="cairo/simple_bootloader_output_memory_layout.png" alt="Simple bootloader output memory layout" width="100%">
+</div>
+<h4 id="how-do-task-programs-use-builtins-other-than-the-output-builtin"><a class="header" href="#how-do-task-programs-use-builtins-other-than-the-output-builtin">How do task programs use builtins other than the output builtin?</a></h4>
+<ul>
+<li>assuming that the selected layout supports the builtins that the task program uses, the bootloader will pass the necessary builtin pointers to the task program’s main function, and the task program will use builtin cells as needed and return the pointers to the next unused builtin cells.</li>
+<li>at the end of the task program run, the bootloader will validate that the builtin pointers have been correctly advanced, as explained in the <a href="cairo/bootloader.html#what-builtins-does-the-bootloader-use">What builtins does the bootloader use?</a> section.</li>
+</ul>
+<h4 id="how-are-task-program-hints-handled"><a class="header" href="#how-are-task-program-hints-handled">How are task program hints handled?</a></h4>
+<ul>
+<li>As mentioned in the <a href="cairo/bootloader.html#a-short-primer-on-how-cairovm-works">A short primer on how the CairoVM works</a> section, hints are specified to run before a certain bytecode is executed. In CairoVM, that refers the the “pc” value, or the program counter, and this value is normally a value in Segment 0. So a typical hint should run before, say when pc=(Segment 0, Index 15).</li>
+<li>However, task program bytecode are loaded into a separate segment (e.g. Segment 11), so the pc values for the hints of the task program need to updated accordingly.</li>
+</ul>
+<h2 id="how-the-advanced-bootloader-works"><a class="header" href="#how-the-advanced-bootloader-works">How the “advanced” bootloader works</a></h2>
+<p>The “advanced” bootloader builds upon the “simple” bootloader by allowing as input not just Cairo programs but also a structured set of inputs that include both Cairo programs and simple bootloader proofs. In this section, we will go over how this works in multiple steps.</p>
+<p>(The “advanced” bootloader refers to the <code>bootloader.cairo</code> file (<a href="https://github.com/starkware-libs/cairo-lang/blob/v0.13.1/src/starkware/cairo/bootloaders/bootloader/bootloader.cairo">link</a>) in the Cairo repo.)</p>
+<h3 id="step-1-a-cairo-verifier-program"><a class="header" href="#step-1-a-cairo-verifier-program">Step 1: A Cairo verifier program</a></h3>
+<p>First, we need to understand what a Cairo verifier program is.</p>
+<p>A Cairo verifier is a Cairo program that verifies a Cairo proof, and in this case, it will only verify a proof generated using the “simple” bootloader. Below is an example of what running a Cairo verifier program looks like.</p>
+<div style="text-align: center;">
+    <img src="cairo/cairo_verifier_example.png" alt="Cairo verifier example" width="70%">
+</div>
+<p>Note that when the Cairo verifier verifies the simple bootloader proof, it includes in the output the hash of the simple bootloader program and the hash of the outputs of the simple bootloader. This means that it is possible to commit to the output of the simple bootloader using the Cairo verifier and open it later.</p>
+<h3 id="step-2-iteratively-creating-proofs"><a class="header" href="#step-2-iteratively-creating-proofs">Step 2: Iteratively creating proofs</a></h3>
+<p>Looking closely at diagram above, you can see that we can tweak it a little bit to create a perfect loop. Since the simple bootloader can run any arbitrary program and the Cairo verifier requires a proof of the simple bootloader, we can do something like the following:</p>
+<div style="text-align: center;">
+    <img src="cairo/perfect_loop.png" alt="Perfect loop" width="40%">
+</div>
+<p>Of course, there is no point in just repeating this loop, but if we tweak this just a little bit again, we can do something more interesting: creating a proof that both verifies an existing proof and proves a new program. We’ll call this “iteratively creating proofs”, which is the core of what the “advanced” bootloader does.</p>
+<div style="text-align: center;">
+    <img src="cairo/iteratively_creating_proofs.png" alt="Iteratively creating proofs" width="60%">
+</div>
+<p>This might still not seem too useful, but it unlocks a new use-case for users who want to create proofs of programs as they come, not just when they have a fixed set. For example, L2 nodes that need to create a single proof of programs that are transmitted over a 15-minute period do not need to wait for the whole 15 minutes and create a proof at the last minute, which would take a long time if the number of programs to be proven are large. Instead, they can create a proof after the first 1 minute, and for the next 14 times every minute they can create a new proof that recursively proves the previous proof and proves the new programs.</p>
+<p>This might still not seem too useful, but it unlocks a new use-case for users who want to create proofs of programs as they come, not just when they have a fixed set. For example, L2 nodes that need to create a single proof of programs that are transmitted over a 15-minute period do not need to wait for the whole 15 minutes and create a proof at the last minute, which would take a long time if the number of programs to be proven are large. Instead, they can create a proof after the first 1 minute, and for the next 14 times every minute they can create a new proof that recursively proves the previous proof and proves the new programs.</p>
+<h3 id="step-3-verifying-iteratively-created-proofs"><a class="header" href="#step-3-verifying-iteratively-created-proofs">Step 3: Verifying iteratively created proofs</a></h3>
+<p>At the end of the iterations, we will have a simple bootloader program proof but its output will be a compressed version of the intermediary outputs (as mentioned in <a href="cairo/bootloader.html#step-1-a-cairo-verifier-program">Step 1</a>, the Cairo verifier program will hash the outputs of the simple bootloader program), so there needs to be an additional verification process for the final output. The “advanced” bootloader achieves this using hints: through hints, it receives information about the structure of the intermediary outputs and the final output, and also the pre-images of the hashes used and verify inside the VM that the structure is correct.</p>
+<p>You can think of the structure as a tree where each node is either a Cairo program (referred to as a “plain task”) or a simple bootloader proof (referred to as a “composite task”) and a non-data root node.</p>
+<div style="text-align: center;">
+    <img src="cairo/output_structure.png" alt="Output structure" width="80%">
+</div>
+<p>As you can see in the diagram above, the colored shapes represent the nodes of the tree, with the “Bootloader input” node being the final node (or the root).</p>
+<p>The “advanced” bootloader takes in a “Bootloader input” node as an input, which will contain only the nodes of depth 1 (i.e. “Composite Task 2”, “Plain Task 4”, and “Plain Task 5”). Once the simple bootloader encounters a composite task, it will do a depth-first search traversal of the tree to find all the plain task nodes, at which point it will write the outputs to the memory.</p>
+<p><img src="cairo/depth_first_search_traversal.png" alt="Depth-first search traversal" /></p>
+<p>As you can see in the diagram above, at the end of the bootloader run, the memory will be populated with the outputs of all the plain task nodes.</p>
 <div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
 <h1 id="builtins-and-layouts"><a class="header" href="#builtins-and-layouts">Builtins and Layouts</a></h1>
-<h2 id="builtins"><a class="header" href="#builtins">Builtins</a></h2>
+<h2 id="builtins-1"><a class="header" href="#builtins-1">Builtins</a></h2>
 <h2 id="layouts"><a class="header" href="#layouts">Layouts</a></h2>
 <p>Different layouts are deployed on SHARP:</p>
 <p>https://github.com/starkware-libs/starkex-contracts/tree/aecf37f2278b2df233edd13b686d0aa9462ada02/evm-verifier/solidity/contracts/cpu</p>
