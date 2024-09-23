@@ -430,20 +430,42 @@ These boundary constraints can only be used on a few rows, otherwise they’re e
 <p>Note: this doc is based on the <a href="https://github.com/starkware-libs/cairo-lang/tree/v0.13.1/src/starkware/cairo/bootloaders">Cairo v0.13.1 version of the bootloader</a></p>
 <p>Please refer to the <a href="cairo/./cairo_vm.html">CairoVM doc</a> for an overview of how CairoVM works.</p>
 <h2 id="how-the-simple-bootloader-works"><a class="header" href="#how-the-simple-bootloader-works">How the “simple bootloader” works</a></h2>
-<p>Coming back to the bootloader, as per the previous section, running the bootloader program will result in a memory vector and an execution trace. But since the bootloader program runs Cairo programs inside it, the generated memory and execution trace should include those of the Cairo programs as well. Below is an example of what the memory layout looks like after running the bootloader:</p>
+<p>Here is a pseudocode of how the simple bootloader works on a high level:</p>
+<pre><code>function run_simple_bootloader(tasks):
+    load_bootloader_instructions()
+    write_to_output(len(tasks))
+
+    for task in tasks:
+        load_task_instructions(task)
+        hash = compute_task_instructions_hash(task)
+        write_to_output(hash)
+
+        builtin_pointers = get_required_builtin_allocators(task)
+        task_outputs = run_task(task, builtin_pointers)
+        write_to_output(task_outputs)
+
+        for pointer in builtin_pointers:
+            validate_allocator_advancement(pointer)
+
+function validate_allocator_advancement(pointer):
+    advancement = pointer.current_pointer - pointer.initial_pointer
+    assert advancement &gt;= 0 and advancement % pointer.cells_per_use == 0
+
+</code></pre>
+<p>Running the bootloader program (as running any Cairo program) will result in a memory vector and an execution trace. But since the bootloader program runs Cairo programs inside it, the generated memory and execution trace should include those of the Cairo programs as well. Below is an example of what the memory layout looks like after running the bootloader:</p>
 <div style="text-align: center;">
     <img src="cairo/simple_bootloader_memory_layout.png" alt="Simple bootloader memory layout" width="80%">
 </div>
 <p>(Note: a <strong>task</strong> here refers to a single Cairo program and its inputs)</p>
-<p>In other words, what the bootloader program does is it makes sure that the inner Cairo programs can write to various segments in the memory without any conflicts with each other or with the outer bootloader program.</p>
-<p>This is a “simple” use of the bootloader and we can use this functionality using the <code>simple_bootloader.cairo</code> file (<a href="https://github.com/starkware-libs/cairo-lang/blob/v0.13.1/src/starkware/cairo/bootloaders/simple_bootloader/simple_bootloader.cairo">link</a>) in the Cairo repo. We will discuss an “advanced” use of the bootloader in the next section.</p>
+<p>In other words, what the bootloader program does is it makes sure that the inner Cairo programs can write to various segments in the memory without any conflicts with each other or with the outer bootloader program. It also hashes the instructions of each inner Cairo program and writes the hashes to the output.</p>
+<p>This is a “simple” use of the bootloader and we can use this functionality using the <code>simple_bootloader.cairo</code> file (<a href="https://github.com/starkware-libs/cairo-lang/blob/v0.13.1/src/starkware/cairo/bootloaders/simple_bootloader/simple_bootloader.cairo">link</a>) in the Cairo repo. We will discuss an “advanced” use of the bootloader in the <a href="cairo/bootloader.html#how-the-advanced-bootloader-works">How the “advanced” bootloader works</a> section.</p>
 <h3 id="some-more-details-on-how-the-simple-bootloader-works"><a class="header" href="#some-more-details-on-how-the-simple-bootloader-works">Some more details on how the “simple” bootloader works</a></h3>
 <h4 id="what-builtins-does-the-bootloader-use"><a class="header" href="#what-builtins-does-the-bootloader-use">What builtins does the bootloader use?</a></h4>
 <ul>
 <li>
 <p>output</p>
 <ul>
-<li>the “simple” bootloader doesn’t write any output to the memory</li>
+<li>[num of tasks, [task 1 program instructions hash, task 1 outputs], …, [task n program instructions hash, task n outputs]]</li>
 </ul>
 </li>
 <li>
@@ -512,18 +534,39 @@ These boundary constraints can only be used on a few rows, otherwise they’re e
 <div style="text-align: center;">
     <img src="cairo/iteratively_creating_proofs.png" alt="Iteratively creating proofs" width="60%">
 </div>
-<p>This might still not seem too useful, but it unlocks a new use-case for users who want to create proofs of programs as they come, not just when they have a fixed set. For example, L2 nodes that need to create a single proof of programs that are transmitted over a 15-minute period do not need to wait for the whole 15 minutes and create a proof at the last minute, which would take a long time if the number of programs to be proven are large. Instead, they can create a proof after the first 1 minute, and for the next 14 times every minute they can create a new proof that recursively proves the previous proof and proves the new programs.</p>
-<p>This might still not seem too useful, but it unlocks a new use-case for users who want to create proofs of programs as they come, not just when they have a fixed set. For example, L2 nodes that need to create a single proof of programs that are transmitted over a 15-minute period do not need to wait for the whole 15 minutes and create a proof at the last minute, which would take a long time if the number of programs to be proven are large. Instead, they can create a proof after the first 1 minute, and for the next 14 times every minute they can create a new proof that recursively proves the previous proof and proves the new programs.</p>
-<h3 id="step-3-verifying-iteratively-created-proofs"><a class="header" href="#step-3-verifying-iteratively-created-proofs">Step 3: Verifying iteratively created proofs</a></h3>
-<p>At the end of the iterations, we will have a simple bootloader program proof but its output will be a compressed version of the intermediary outputs (as mentioned in <a href="cairo/bootloader.html#step-1-a-cairo-verifier-program">Step 1</a>, the Cairo verifier program will hash the outputs of the simple bootloader program), so there needs to be an additional verification process for the final output. The “advanced” bootloader achieves this using hints: through hints, it receives information about the structure of the intermediary outputs and the final output, and also the pre-images of the hashes used and verify inside the VM that the structure is correct.</p>
-<p>You can think of the structure as a tree where each node is either a Cairo program (referred to as a “plain task”) or a simple bootloader proof (referred to as a “composite task”) and a non-data root node.</p>
+<p>This might still not seem too useful, but it unlocks a new use case for users who want to create proofs of programs as they come, not just when they have a fixed set. For example, L2 nodes that need to create a single proof of programs that are transmitted over a 15-minute period do not need to wait for the whole 15 minutes and create a proof at the last minute, which would take a long time if the number of programs to be proven are large. Instead, they can create a proof after the first 1 minute, and for the next 14 times every minute they can create a new proof that recursively proves the previous proof and proves the new programs.</p>
+<p>We can also simply run multiple simple bootloaders on separate programs and aggregate the proofs with a single additional simple bootloader execution. This can have the following benefits:</p>
+<ul>
+<li>improve proving time if multiple simple bootloaders are run in parallel</li>
+<li>avoid memory limits from proving too many programs at once</li>
+</ul>
 <div style="text-align: center;">
-    <img src="cairo/output_structure.png" alt="Output structure" width="80%">
+    <img src="cairo/parallel_simple_bootloaders.png" alt="Parallel simple bootloaders" width="100%">
 </div>
-<p>As you can see in the diagram above, the colored shapes represent the nodes of the tree, with the “Bootloader input” node being the final node (or the root).</p>
-<p>The “advanced” bootloader takes in a “Bootloader input” node as an input, which will contain only the nodes of depth 1 (i.e. “Composite Task 2”, “Plain Task 4”, and “Plain Task 5”). Once the simple bootloader encounters a composite task, it will do a depth-first search traversal of the tree to find all the plain task nodes, at which point it will write the outputs to the memory.</p>
-<p><img src="cairo/depth_first_search_traversal.png" alt="Depth-first search traversal" /></p>
-<p>As you can see in the diagram above, at the end of the bootloader run, the memory will be populated with the outputs of all the plain task nodes.</p>
+<h3 id="step-3-verifying-iteratively-created-proofs"><a class="header" href="#step-3-verifying-iteratively-created-proofs">Step 3: Verifying iteratively created proofs</a></h3>
+<p>At the end of the iterations, we will have a simple bootloader program proof but its output will be a hash of the outputs of the previous iteration (as mentioned in <a href="cairo/bootloader.html#step-1-a-cairo-verifier-program">Step 1</a>). We can view this as a tree where the output of the final iteration is the root.</p>
+<div style="text-align: center;">
+    <img src="cairo/simple_tree.png" alt="Simple tree" width="40%">
+</div>
+<p>So the tree will look something like the above, where a <strong>plain task</strong> represents a Cairo program and a <strong>composite task</strong> represents a Cairo verifier program. Here, Composite Task 2 represents the root of the tree, and it contains the hash of the outputs of Composite Task 1 and Plain Task 3.</p>
+<p>Unfortunately, the simple bootloader does not have a way to verify that this root is correct, and this is where the “advanced” bootloader steps in. The “advanced” bootloader verifies the root by doing a depth-first search and verifying that all internal nodes (i.e. composite tasks) correctly hash the outputs of its children.</p>
+<div style="text-align: center;">
+    <img src="cairo/depth_first_search_verification.png" alt="Depth-first search verification" width="80%">
+</div>
+<p>After verification, the advanced bootloader now knows all the leaf data of the tree, so it can write to the output the entire set of task program outputs that have been proven throughout the iterations. This way, anyone looking at the bootloader output can check that a certain Cairo program has a certain output.</p>
+<div style="text-align: center;">
+    <img src="cairo/final_bootloader_output_structure.png" alt="Final bootloader output structure" width="60%">
+</div>
+<p>Bringing it all together, this is what a sample bootloader run looks like:</p>
+<ol>
+<li>Run simple bootloader that runs Plain Task 1 and Plain Task 2</li>
+<li>Run simple bootloader that runs Composite Task 1 and Plain Task 3</li>
+<li>Run advanced bootloader that runs Composite Task 2 and Plain Task 4 and Plain Task 5</li>
+</ol>
+<p>In step 3, the outputs of Plain Tasks 1, 2, and 3 will need to be provided as hints to the advanced bootloader.</p>
+<div style="text-align: center;">
+    <img src="cairo/sample_bootloader_run.png" alt="Sample bootloader run" width="80%">
+</div>
 <div style="break-before: page; page-break-before: always;"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
 <h1 id="builtins-and-layouts"><a class="header" href="#builtins-and-layouts">Builtins and Layouts</a></h1>
 <h2 id="builtins"><a class="header" href="#builtins">Builtins</a></h2>
