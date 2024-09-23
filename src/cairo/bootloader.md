@@ -8,7 +8,32 @@ Please refer to the [CairoVM doc](./cairo_vm.md) for an overview of how CairoVM 
 
 ## How the "simple bootloader" works
 
-Coming back to the bootloader, as per the previous section, running the bootloader program will result in a memory vector and an execution trace. But since the bootloader program runs Cairo programs inside it, the generated memory and execution trace should include those of the Cairo programs as well. Below is an example of what the memory layout looks like after running the bootloader:
+Here is a pseudocode of how the simple bootloader works on a high level:
+
+```
+function run_simple_bootloader(tasks):
+    load_bootloader_instructions()
+    write_to_output(len(tasks))
+
+    for task in tasks:
+        load_task_instructions(task)
+        hash = compute_task_instructions_hash(task)
+        write_to_output(hash)
+
+        builtin_pointers = get_required_builtin_allocators(task)
+        task_outputs = run_task(task, builtin_pointers)
+        write_to_output(task_outputs)
+
+        for pointer in builtin_pointers:
+            validate_allocator_advancement(pointer)
+
+function validate_allocator_advancement(pointer):
+    advancement = pointer.current_pointer - pointer.initial_pointer
+    assert advancement >= 0 and advancement % pointer.cells_per_use == 0
+
+```
+
+Running the bootloader program (as running any Cairo program) will result in a memory vector and an execution trace. But since the bootloader program runs Cairo programs inside it, the generated memory and execution trace should include those of the Cairo programs as well. Below is an example of what the memory layout looks like after running the bootloader:
 
 <div style="text-align: center;">
     <img src="simple_bootloader_memory_layout.png" alt="Simple bootloader memory layout" width="80%">
@@ -16,16 +41,16 @@ Coming back to the bootloader, as per the previous section, running the bootload
 
 (Note: a **task** here refers to a single Cairo program and its inputs)
 
-In other words, what the bootloader program does is it makes sure that the inner Cairo programs can write to various segments in the memory without any conflicts with each other or with the outer bootloader program.
+In other words, what the bootloader program does is it makes sure that the inner Cairo programs can write to various segments in the memory without any conflicts with each other or with the outer bootloader program. It also hashes the instructions of each inner Cairo program and writes the hashes to the output.
 
-This is a "simple" use of the bootloader and we can use this functionality using the `simple_bootloader.cairo` file ([link](https://github.com/starkware-libs/cairo-lang/blob/v0.13.1/src/starkware/cairo/bootloaders/simple_bootloader/simple_bootloader.cairo)) in the Cairo repo. We will discuss an "advanced" use of the bootloader in the next section.
+This is a "simple" use of the bootloader and we can use this functionality using the `simple_bootloader.cairo` file ([link](https://github.com/starkware-libs/cairo-lang/blob/v0.13.1/src/starkware/cairo/bootloaders/simple_bootloader/simple_bootloader.cairo)) in the Cairo repo. We will discuss an "advanced" use of the bootloader in the [How the "advanced" bootloader works](#how-the-advanced-bootloader-works) section.
 
 ### Some more details on how the "simple" bootloader works
 
 #### What builtins does the bootloader use?
 
 - output
-  - the "simple" bootloader doesn't write any output to the memory
+  - [num of tasks, [task 1 program instructions hash, task 1 outputs], ..., [task n program instructions hash, task n outputs]]
 - pedersen
   - used to hash the task program bytecode
 - range checks
@@ -100,24 +125,47 @@ Of course, there is no point in just repeating this loop, but if we tweak this j
     <img src="iteratively_creating_proofs.png" alt="Iteratively creating proofs" width="60%">
 </div>
 
-This might still not seem too useful, but it unlocks a new use-case for users who want to create proofs of programs as they come, not just when they have a fixed set. For example, L2 nodes that need to create a single proof of programs that are transmitted over a 15-minute period do not need to wait for the whole 15 minutes and create a proof at the last minute, which would take a long time if the number of programs to be proven are large. Instead, they can create a proof after the first 1 minute, and for the next 14 times every minute they can create a new proof that recursively proves the previous proof and proves the new programs.
+This might still not seem too useful, but it unlocks a new use case for users who want to create proofs of programs as they come, not just when they have a fixed set. For example, L2 nodes that need to create a single proof of programs that are transmitted over a 15-minute period do not need to wait for the whole 15 minutes and create a proof at the last minute, which would take a long time if the number of programs to be proven are large. Instead, they can create a proof after the first 1 minute, and for the next 14 times every minute they can create a new proof that recursively proves the previous proof and proves the new programs.
 
-This might still not seem too useful, but it unlocks a new use-case for users who want to create proofs of programs as they come, not just when they have a fixed set. For example, L2 nodes that need to create a single proof of programs that are transmitted over a 15-minute period do not need to wait for the whole 15 minutes and create a proof at the last minute, which would take a long time if the number of programs to be proven are large. Instead, they can create a proof after the first 1 minute, and for the next 14 times every minute they can create a new proof that recursively proves the previous proof and proves the new programs.
+We can also simply run multiple simple bootloaders on separate programs and aggregate the proofs with a single additional simple bootloader execution. This can have the following benefits:
+
+- improve proving time if multiple simple bootloaders are run in parallel
+- avoid memory limits from proving too many programs at once
+
+<div style="text-align: center;">
+    <img src="parallel_simple_bootloaders.png" alt="Parallel simple bootloaders" width="100%">
+</div>
 
 ### Step 3: Verifying iteratively created proofs
 
-At the end of the iterations, we will have a simple bootloader program proof but its output will be a compressed version of the intermediary outputs (as mentioned in [Step 1](#step-1-a-cairo-verifier-program), the Cairo verifier program will hash the outputs of the simple bootloader program), so there needs to be an additional verification process for the final output. The "advanced" bootloader achieves this using hints: through hints, it receives information about the structure of the intermediary outputs and the final output, and also the pre-images of the hashes used and verify inside the VM that the structure is correct.
-
-You can think of the structure as a tree where each node is either a Cairo program (referred to as a "plain task") or a simple bootloader proof (referred to as a "composite task") and a non-data root node.
+At the end of the iterations, we will have a simple bootloader program proof but its output will be a hash of the outputs of the previous iteration (as mentioned in [Step 1](#step-1-a-cairo-verifier-program)). We can view this as a tree where the output of the final iteration is the root.
 
 <div style="text-align: center;">
-    <img src="output_structure.png" alt="Output structure" width="80%">
+    <img src="simple_tree.png" alt="Simple tree" width="40%">
 </div>
 
-As you can see in the diagram above, the colored shapes represent the nodes of the tree, with the "Bootloader input" node being the final node (or the root).
+So the tree will look something like the above, where a **plain task** represents a Cairo program and a **composite task** represents a Cairo verifier program. Here, Composite Task 2 represents the root of the tree, and it contains the hash of the outputs of Composite Task 1 and Plain Task 3.
 
-The "advanced" bootloader takes in a "Bootloader input" node as an input, which will contain only the nodes of depth 1 (i.e. "Composite Task 2", "Plain Task 4", and "Plain Task 5"). Once the simple bootloader encounters a composite task, it will do a depth-first search traversal of the tree to find all the plain task nodes, at which point it will write the outputs to the memory.
+Unfortunately, the simple bootloader does not have a way to verify that this root is correct, and this is where the "advanced" bootloader steps in. The "advanced" bootloader verifies the root by doing a depth-first search and verifying that all internal nodes (i.e. composite tasks) correctly hash the outputs of its children.
 
-![Depth-first search traversal](depth_first_search_traversal.png)
+<div style="text-align: center;">
+    <img src="depth_first_search_verification.png" alt="Depth-first search verification" width="80%">
+</div>
 
-As you can see in the diagram above, at the end of the bootloader run, the memory will be populated with the outputs of all the plain task nodes.
+After verification, the advanced bootloader now knows all the leaf data of the tree, so it can write to the output the entire set of task program outputs that have been proven throughout the iterations. This way, anyone looking at the bootloader output can check that a certain Cairo program has a certain output.
+
+<div style="text-align: center;">
+    <img src="final_bootloader_output_structure.png" alt="Final bootloader output structure" width="60%">
+</div>
+
+Bringing it all together, this is what a sample bootloader run looks like:
+
+1. Run simple bootloader that runs Plain Task 1 and Plain Task 2
+2. Run simple bootloader that runs Composite Task 1 and Plain Task 3
+3. Run advanced bootloader that runs Composite Task 2 and Plain Task 4 and Plain Task 5
+
+In step 3, the outputs of Plain Tasks 1, 2, and 3 will need to be provided as hints to the advanced bootloader.
+
+<div style="text-align: center;">
+    <img src="sample_bootloader_run.png" alt="Sample bootloader run" width="80%">
+</div>
