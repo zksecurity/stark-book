@@ -50,7 +50,7 @@ This is a "simple" use of the bootloader and we can use this functionality using
 #### What builtins does the bootloader use?
 
 - output
-  - [num of tasks, [task 1 program instructions hash, task 1 outputs], ..., [task n program instructions hash, task n outputs]]
+  - used to write the number of tasks and sequentially write the output related to each task
 - pedersen
   - used to hash the task program bytecode
 - range checks
