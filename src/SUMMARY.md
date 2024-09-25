@@ -22,6 +22,7 @@
 
 - [Cairo](./cairo/cairo.md)
 - [Cairo public memory](./cairo/memory.md)
+- [Cairo VM](./cairo/cairo_vm.md)
 - [Bootloader](./cairo/bootloader.md)
 - [Builtins and Layouts](./cairo/builtins.md)
 
