@@ -1,0 +1,265 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Cairo VM - STARK book</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../././mdbook-admonish.css">
+
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded affix "><li class="part-title">Foundations</li><li class="chapter-item expanded "><a href="../math/finite_fields.html"><strong aria-hidden="true">2.</strong> Finite Fields</a></li><li class="chapter-item expanded "><a href="../math/lde.html"><strong aria-hidden="true">3.</strong> Functions and low-degree extension</a></li><li class="chapter-item expanded "><a href="../math/extension_fields.html"><strong aria-hidden="true">4.</strong> Extension Fields</a></li><li class="chapter-item expanded "><a href="../math/code_theory.html"><strong aria-hidden="true">5.</strong> Code Theory</a></li><li class="chapter-item expanded affix "><li class="part-title">Circuits</li><li class="chapter-item expanded "><a href="../air/air.html"><strong aria-hidden="true">6.</strong> The AIR Arithmetization</a></li><li class="chapter-item expanded affix "><li class="part-title">STARK</li><li class="chapter-item expanded "><a href="../stark/overview.html"><strong aria-hidden="true">7.</strong> STARK</a></li><li class="chapter-item expanded "><a href="../fri/fri.html"><strong aria-hidden="true">8.</strong> FRI</a></li><li class="chapter-item expanded affix "><li class="part-title">Cairo: STARK's zkVM</li><li class="chapter-item expanded "><a href="../cairo/cairo.html"><strong aria-hidden="true">9.</strong> Cairo</a></li><li class="chapter-item expanded "><a href="../cairo/memory.html"><strong aria-hidden="true">10.</strong> Cairo public memory</a></li><li class="chapter-item expanded "><a href="../cairo/cairo_vm.html" class="active"><strong aria-hidden="true">11.</strong> Cairo VM</a></li><li class="chapter-item expanded "><a href="../cairo/bootloader.html"><strong aria-hidden="true">12.</strong> Bootloader</a></li><li class="chapter-item expanded "><a href="../cairo/builtins.html"><strong aria-hidden="true">13.</strong> Builtins and Layouts</a></li><li class="chapter-item expanded affix "><li class="part-title">Starkex: Verifying Cairo programs on Ethereum</li><li class="chapter-item expanded "><a href="../starkex/starkex.html"><strong aria-hidden="true">14.</strong> Overview</a></li><li class="chapter-item expanded "><a href="../starkex/facts.html"><strong aria-hidden="true">15.</strong> Facts</a></li><li class="chapter-item expanded "><a href="../starkex/cairo.html"><strong aria-hidden="true">16.</strong> Verifying Cairo proofs</a></li><li class="chapter-item expanded "><a href="../starkex/proof-splitter.html"><strong aria-hidden="true">17.</strong> Proof splitter</a></li><li class="chapter-item expanded "><a href="../starkex/bootloader.html"><strong aria-hidden="true">18.</strong> Bootloader</a></li><li class="chapter-item expanded affix "><li class="part-title">Starknet</li><li class="chapter-item expanded "><a href="../starknet/starknet.html"><strong aria-hidden="true">19.</strong> Starknet</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">STARK book</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://www.github.com/zksecurity/stark-book" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<h1 id="cairovm"><a class="header" href="#cairovm">CairoVM</a></h1>
+<p>Cairo compiles down to CairoVM and in the end produce a memory vector and execution trace table that is populated throughout the execution of the program.</p>
+<p>More specifically, the fully assigned memory can be thought of as a vector that is divided into segments that have different functionalities (e.g. program instructions, execution, output). The execution trace is a table with 3 columns each representing a register value and rows that each represent the value of the registers over the execution of the program.</p>
+<div style="text-align: center;">
+    <img src="cairo_vm.png" alt="CairoVM execution structure" width="80%">
+</div>
+<p>Note: the execution segment can be thought of as values that are written to the memory when running a program. Since the memory values can only be written once in CairoVM, Cairo programs keep track of the next available memory cell with a “allocation pointer” register (similar to a bump allocator in conventional terms).</p>
+<p>Using these results of the CairoVM execution, the Stone prover can create a proof that proves the following (very roughly speaking):</p>
+<ul>
+<li>there exists a valid execution trace of n steps on the CairoVM
+<ul>
+<li>which starts with a given set of initial register values</li>
+<li>which ends with a given set of final register values</li>
+<li>for some memory which satisfies certain constraints (e.g. read-only, continuous, consistent with the public memory portion)</li>
+</ul>
+</li>
+</ul>
+<h2 id="builtins"><a class="header" href="#builtins">Builtins</a></h2>
+<p>Builtins can be understood as memory-mapped peripherals, i.e. pre-allocated memory cells that can be used for certain commonly-used functions.</p>
+<p>As of Cairo v0.13.1, these builtins are currently supported:</p>
+<ul>
+<li>Output</li>
+<li>Pedersen</li>
+<li>Range check (128 bits)</li>
+<li>Bitwise</li>
+<li>Elliptic curve operation</li>
+<li>Keccak</li>
+<li>Poseidon</li>
+<li>Range check (96 bits)</li>
+</ul>
+<p>Each builtin is assigned a separate segment in the memory vector. The VM will write the builtin inputs to memory cells in the segment and retrieve the builtin outputs by reading memory cells from the segment.</p>
+<p>For the range-check builtin, the CairoVM simply writes the value to be range checked into the next unused cell in the range-check segment. This segment guarantees that every memory cell in the range [X, Y).</p>
+<p>For a Pedersen builtin, on the other hand, for each builtin use, you can input two values and read the next cell as output since the VM provides a guarantee that the next cell will contain the correct output (i.e. the Pedersen hash of the two input values).</p>
+<div style="text-align: center;">
+    <img src="builtin_memory_layout.png" alt="Builtin memory layout" width="80%">
+</div>
+<p>In order to run a program that uses one of these builtins, we need to specify a specific layout to CairoVM that supports the builtins that the program uses. Below is a subset of layouts that are currently supported by the CairoVM. (Check this <a href="https://github.com/lambdaclass/cairo-vm/blob/main/vm/src/types/instance_definitions/builtins_instance_def.rs">code</a> for the updated, comprehensive list)</p>
+<div class="table-wrapper"><table><thead><tr><th></th><th style="text-align: center">small</th><th style="text-align: center">recursive</th><th style="text-align: center">dex</th><th style="text-align: center">recursive_with_poseidon</th><th style="text-align: center">starknet</th><th style="text-align: center">starknet_with_keccak</th></tr></thead><tbody>
+<tr><td>output</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>pedersen</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>range_check</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>bitwise</td><td style="text-align: center"></td><td style="text-align: center">O</td><td style="text-align: center"></td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>ecdsa</td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center">O</td><td style="text-align: center"></td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>poseidon</td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center">O</td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>ec_op</td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center">O</td><td style="text-align: center">O</td></tr>
+<tr><td>keccak</td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center"></td><td style="text-align: center">O</td></tr>
+</tbody></table>
+</div>
+<h2 id="hints"><a class="header" href="#hints">Hints</a></h2>
+<p>Hints are non-deterministic computation (i.e. code that is run outside of the VM to populate values that are validated inside the VM)</p>
+<p>For example, when computing the square root of an integer in a prime field, directly computing this using constraints is expensive. So instead, we can use hint to calculate the square root and create a constraint inside the VM that checks that the power of the given square root is equal to the original value.</p>
+<p>So given a computation <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.04em;vertical-align:-0.3369em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7031em;"><span class="svg-align" style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord" style="padding-left:0.833em;"><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span><span style="top:-2.6631em;"><span class="pstrut" style="height:3em;"></span><span class="hide-tail" style="min-width:0.853em;height:1.08em;"><svg xmlns="http://www.w3.org/2000/svg" width='400em' height='1.08em' viewBox='0 0 400000 1080' preserveAspectRatio='xMinYMin slice'><path d='M95,702 c-2.7,0,-7.17,-2.7,-13.5,-8c-5.8,-5.3,-9.5,-10,-9.5,-14 c0,-2,0.3,-3.3,1,-4c1.3,-2.7,23.83,-20.7,67.5,-54 c44.2,-33.3,65.8,-50.3,66.5,-51c1.3,-1.3,3,-2,5,-2c4.7,0,8.7,3.3,12,10 s173,378,173,378c0.7,0,35.3,-71,104,-213c68.7,-142,137.5,-285,206.5,-429 c69,-144,104.5,-217.7,106.5,-221 l0 -0 c5.3,-9.3,12,-14,20,-14 H400000v40H845.2724 s-225.272,467,-225.272,467s-235,486,-235,486c-2.7,4.7,-9,7,-19,7 c-6,0,-10,-1,-12,-3s-194,-422,-194,-422s-65,47,-65,47z M834 80h400000v40h-400000z'/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3369em;"><span></span></span></span></span></span></span></span></span>, compute <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span></span> using a hint and create a constraint: <span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.4653em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">∗</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span></p>
+<p><span class="katex"><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span> from the perspective of the VM is a wild guess, but the constraint makes sure that it’s valid.</p>
+<p>In Cairo 0 language, you can run a hint by embedding a block of Python code. Below is an example of computing a square root of 25.</p>
+<pre><code class="language-python">[ap] = 25, ap++;
+%{
+    import math
+    memory[ap] = int(math.sqrt(memory[ap - 1]))
+%}
+[ap - 1] = [ap] * [ap], ap++;
+</code></pre>
+<p>When compiling this Cairo 0 program into CASM, the compiler stores this Python code as a string and specifies that this hint should be run before running the ensuing instruction. In this case, the hint should be run before the <code>[ap - 1] = [ap] * [ap], ap++;</code> instruction.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../cairo/memory.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="../cairo/bootloader.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../cairo/memory.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="../cairo/bootloader.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../mermaid.min.js"></script>
+        <script src="../mermaid-init.js"></script>
+
+
+    </div>
+    </body>
+</html>
